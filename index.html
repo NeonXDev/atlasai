@@ -746,33 +746,38 @@
 
   // ── Send message ──
   async function sendMessage() {
-    const msg = inputEl.value.trim();
-    if (!msg) return;
-    inputEl.value = '';
-    addMessage('user', msg);
-    showTyping();
-    setOrb('thinking');
-    try {
-      const res = await fetch('/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: msg })
-      });
-      const data = await res.json();
-      removeTyping();
-      lastAiReply = data.response;
-      addMessage('ai', data.response);
-      setOrb('idle');
-    } catch {
-      removeTyping();
-      addMessage('ai', '⚠ Could not reach Atlas. Make sure the server is running!');
-      setOrb('idle');
-    }
+  const msg = inputEl.value.trim();
+  if (!msg) return;
+
+  inputEl.value = '';
+  addMessage('user', msg);
+
+  showTyping();
+  setOrb('thinking');
+
+  try {
+    const url = "https://atlasai-2.onrender.com/chat?msg=" + encodeURIComponent(msg);
+
+    const res = await fetch(url, {
+      method: "GET"
+    });
+
+    if (!res.ok) throw new Error("Server error");
+
+    const data = await res.json();
+
+    removeTyping();
+
+    lastAiReply = data.reply || "No reply received.";
+    addMessage('ai', lastAiReply);
+
+    setOrb('idle');
+  } catch (err) {
+    removeTyping();
+    addMessage('ai', '⚠ Could not reach Atlas. Make sure the server is running!');
+    setOrb('idle');
   }
-
-  function quickCmd(cmd) { inputEl.value = cmd; sendMessage(); }
-  inputEl.addEventListener('keydown', e => { if (e.key === 'Enter') sendMessage(); });
-
+}
   // ── Toggle Speak (Ghibli wind spirit button) ──
   let isSpeaking = false;
 
